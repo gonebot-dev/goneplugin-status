@@ -1,4 +1,4 @@
-module status
+module github.com/gonebot-dev/goneplugin-status
 
 go 1.22.6
 
