@@ -7,12 +7,14 @@ import (
 	"github.com/gonebot-dev/gonebot/plugins"
 )
 
+const infoString string = `CPU usage: %f
+RAM usage: %f
+OS info: %s`
+
 func handler(msg messages.IncomingStruct) (result messages.ResultStruct) {
 	info := GetSysInfo()
 	result.Text = fmt.Sprintf(
-		`CPU usage: %f\n
-		RAM usage: %f\n
-		OS info: %s`,
+		infoString,
 		info.CpuUsedPercent,
 		info.MemUsedPercent,
 		info.OS)
