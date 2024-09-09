@@ -9,7 +9,13 @@ import (
 
 func handler(msg messages.IncomingStruct) (result messages.ResultStruct) {
 	info := GetSysInfo()
-	result.Text = fmt.Sprintf("CPU usage: %f\n", info.CpuUsedPercent)
+	result.Text = fmt.Sprintf(
+		`CPU usage: %f\n
+		RAM usage: %f\n
+		OS info: %s`,
+		info.CpuUsedPercent,
+		info.MemUsedPercent,
+		info.OS)
 	return result
 }
 
