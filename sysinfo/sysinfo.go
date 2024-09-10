@@ -40,17 +40,14 @@ type sysInfo struct {
 	OS   string `json:"os"`
 	Arch string `json:"arch"`
 	//Gonebot
-	SentTotal     int `json:"sentTotal"`
-	ReceivedTotal int `json:"receivedTotal"`
+	SentTotal     int    `json:"sentTotal"`
+	ReceivedTotal int    `json:"receivedTotal"`
+	Backend       string `json:"backend"`
 }
 
 func GetSysInfo() (info sysInfo) {
-	//Disks
-	infos, err := disk.Partitions(false)
-	if err != nil {
-		fmt.Println(err)
-		panic(err)
-	}
+	// Disks
+	infos, _ := disk.Partitions(false)
 	for _, inf := range infos {
 		diskStat, err := disk.Usage(inf.Mountpoint)
 		if err != nil {
@@ -64,7 +61,8 @@ func GetSysInfo() (info sysInfo) {
 			UsedPercent: diskStat.UsedPercent,
 		})
 	}
-	//Mem
+
+	// Mem
 	v, _ := mem.VirtualMemory()
 	info.MemAll = v.Total
 	info.MemUsed = info.MemAll - v.Free
@@ -72,17 +70,15 @@ func GetSysInfo() (info sysInfo) {
 	unit := uint64(1024 * 1024) // MB
 	info.MemAll /= unit
 	info.MemUsed /= unit
-	//CPU
-	info.CpuCores = runtime.GOMAXPROCS(0)
+
+	// CPU
+	info.CpuCores, _ = cpu.Counts(true)
 	cc, _ := cpu.Percent(time.Millisecond*200, false) //CPU usage in 200ms
 	info.CpuUsedPercent = cc[0]
-	dat, err := cpu.Info()
-	if err != nil {
-		fmt.Println(err)
-		panic(err)
-	}
+	dat, _ := cpu.Info()
 	info.CpuInfo = dat[0].ModelName
-	//OS
+
+	// OS
 	info.OS = runtime.GOOS
 	info.Arch = runtime.GOARCH
 
@@ -102,6 +98,7 @@ func GetSysInfo() (info sysInfo) {
 
 	info.SentTotal = api.GetResultCount()
 	info.ReceivedTotal = api.GetIncomingCount()
+	info.Backend = api.GetBackend()
 
 	return
 }

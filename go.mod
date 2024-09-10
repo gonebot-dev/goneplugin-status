@@ -5,7 +5,7 @@ go 1.22.6
 require (
 	github.com/fogleman/gg v1.3.0
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
-	github.com/gonebot-dev/gonebot v0.1.4-0.20240910112359-35f8375d91de
+	github.com/gonebot-dev/gonebot v0.1.4-0.20240910121039-995ac3ec53b0
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	golang.org/x/image v0.20.0
 )
