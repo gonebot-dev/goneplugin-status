@@ -4,15 +4,17 @@ import (
 	"bytes"
 	"embed"
 	"encoding/base64"
+	"fmt"
 	"image"
-	"image/color"
 	_ "image/png"
 	"io"
+	"runtime"
 
 	"github.com/fogleman/gg"
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
 	"github.com/gonebot-dev/goneplugin-status/sysinfo"
+	"github.com/nfnt/resize"
 	"golang.org/x/image/font"
 )
 
@@ -20,19 +22,25 @@ import (
 var assetsFS embed.FS
 
 var bg image.Image
-var myfont font.Face
+var contentFont font.Face
+var titleFont font.Face
 
 // Constants
+const shadowOffsetX float64 = 10
+const shadowOffsetY float64 = 10
+const badgePaddingX float64 = 48
+const badgePaddingY float64 = 24
+const badgeMargin float64 = 32
 const panelPadding float64 = 48
-const badgePaddingX float64 = 58
-const badgePaddingY float64 = 32
 const panelMargin float64 = 48
 const canvasWidth float64 = 1280
 
-var golangBlue = color.RGBA{0, 125, 156, 192}
-var success = color.RGBA{103, 194, 58, 192}
-var warning = color.RGBA{230, 162, 60, 192}
-var errorRed = color.RGBA{245, 108, 108, 192}
+var golangBlue = "#007D9CC0"
+var success = "#67C23AC0"
+var warning = "#E6A23CC0"
+var danger = "#F56C6CC0"
+var shadow = "#00000070"
+var panel = "#FFFFFF9C"
 
 func init() {
 	// Load background, asuming it to be 1280x...
@@ -43,8 +51,13 @@ func init() {
 	// Load font
 	fontData, _ := assetsFS.ReadFile("assets/font.ttf")
 	f, _ := freetype.ParseFont(fontData)
-	myfont = truetype.NewFace(f, &truetype.Options{
-		Size:    48,
+	titleFont = truetype.NewFace(f, &truetype.Options{
+		Size:    64,
+		DPI:     72,
+		Hinting: font.HintingFull,
+	})
+	contentFont = truetype.NewFace(f, &truetype.Options{
+		Size:    36,
 		DPI:     72,
 		Hinting: font.HintingFull,
 	})
@@ -55,127 +68,282 @@ func Render() string {
 	// Render process
 	info := sysinfo.GetSysInfo()
 	tmp := gg.NewContext(0, 0)
-	tmp.SetFontFace(myfont)
-	_, lineHeight := tmp.MeasureString("T")
+	tmp.SetFontFace(titleFont)
+	_, titleLineHeight := tmp.MeasureString("T")
+	tmp.SetFontFace(contentFont)
+	_, contentLineHeight := tmp.MeasureString("T")
 	canvasHeight := panelMargin * 2
 
+	//! Define panels
+	//* Panel for badges
+	canvasHeight += (panelMargin + panelPadding) * 2
+	//? Title badge
+	canvasHeight += badgePaddingY*3 + titleLineHeight
+	//? Adapter, Receive and Send badge
+	canvasHeight += badgePaddingY*2 + contentLineHeight + badgeMargin
+	//? Bot & System run time
+	canvasHeight += badgePaddingY*2 + contentLineHeight + badgeMargin
+
+	//* Panel for CPU usage
+	canvasHeight += (panelPadding)*2 + panelMargin
+	//? CPU title badge
+	canvasHeight += badgePaddingY*3 + titleLineHeight
+	//? CPU Info badge
+	canvasHeight += badgePaddingY*2 + contentLineHeight + badgeMargin
+	//? CPU progress bar
+	canvasHeight += badgePaddingY*2 + contentLineHeight + badgeMargin
+
+	//* Panel for memory usage
+	canvasHeight += (panelPadding)*2 + panelMargin
+	//? Memory title badge
+	canvasHeight += badgePaddingY*3 + titleLineHeight
+	//? Memory Info badge
+	canvasHeight += badgePaddingY*2 + contentLineHeight + badgeMargin
+	//? Memory progress bar
+	canvasHeight += badgePaddingY*2 + contentLineHeight + badgeMargin
+
+	//* Panel for every disk
+	for range info.Disks {
+		//? Disk progress bar
+		canvasHeight += (panelPadding)*2 + panelMargin + badgePaddingY*2 + contentLineHeight
+	}
+
+	//! Generate image
 	img := gg.NewContext(int(canvasWidth), int(canvasHeight))
-	img.SetFontFace(myfont)
+	img.SetFontFace(titleFont)
 
-	// // Panel1 shadow
-	// img.SetRGBA255(0, 0, 0, 112)
-	// img.DrawRoundedRectangle(58, 58, 1184, 440, 64)
-	// img.Fill()
+	//! Render Process
+	//* Background
+	tmpBg := bg
+	if canvasHeight > canvasWidth {
+		tmpBg = resize.Resize(0, uint(canvasHeight), bg, resize.Lanczos3)
+	}
+	img.DrawImageAnchored(tmpBg, int(canvasWidth/2), int(canvasHeight/2), 0.5, 0.5)
 
-	// // Panel1
-	// img.SetRGBA255(255, 255, 255, 156)
-	// img.DrawRoundedRectangle(48, 48, 1184, 440, 64)
-	// img.Fill()
+	//! Render Panels
+	//* Panel for badges
+	img.SetHexColor(shadow)
+	img.DrawRoundedRectangle(
+		panelMargin+shadowOffsetX,
+		panelMargin+shadowOffsetY,
+		canvasWidth-panelMargin*2,
+		badgePaddingY*7+badgeMargin*2+contentLineHeight*2+titleLineHeight+panelPadding*2,
+		32,
+	)
+	img.Fill()
+	img.SetHexColor(panel)
+	img.DrawRoundedRectangle(
+		panelMargin,
+		panelMargin,
+		canvasWidth-panelMargin*2,
+		badgePaddingY*7+badgeMargin*2+contentLineHeight*2+titleLineHeight+panelPadding*2,
+		32,
+	)
+	img.Fill()
+	//? Title badge
+	logo := "\ue62a "
+	if runtime.GOOS == "macos" {
+		logo = "\uf179 "
+	} else if runtime.GOOS == "linux" {
+		logo = "\uf17c "
+	}
+	str := fmt.Sprintf("%sGonebot on %s %s", logo, info.OS, info.Arch)
+	w, _ := img.MeasureString(str)
+	img.SetHexColor(shadow)
+	img.DrawRoundedRectangle(
+		panelMargin+panelPadding+shadowOffsetX,
+		panelMargin+panelPadding+shadowOffsetY,
+		w+badgePaddingX*2,
+		titleLineHeight+badgePaddingY*3,
+		titleLineHeight/2.0+badgePaddingY*1.5,
+	)
+	img.Fill()
+	img.SetHexColor(golangBlue)
+	img.DrawRoundedRectangle(
+		panelMargin+panelPadding,
+		panelMargin+panelPadding,
+		w+badgePaddingX*2,
+		titleLineHeight+badgePaddingY*3,
+		titleLineHeight/2.0+badgePaddingY*1.5,
+	)
+	img.Fill()
+	img.SetHexColor("#FFFFFF")
+	img.DrawString(
+		str,
+		panelMargin+panelPadding+badgePaddingX,
+		panelMargin+panelPadding+badgePaddingY*1.5+titleLineHeight,
+	)
+	//? Adapter, Receive and Send badge
+	img.SetFontFace(contentFont)
+	str = fmt.Sprintf("● %s", info.Backend)
+	w, _ = img.MeasureString(str)
+	img.SetHexColor(shadow)
+	img.DrawRoundedRectangle(
+		panelMargin+panelPadding+shadowOffsetX,
+		panelMargin+panelPadding+badgePaddingY*3+titleLineHeight+badgeMargin+shadowOffsetY,
+		w+badgePaddingX*2,
+		contentLineHeight+badgePaddingY*2,
+		contentLineHeight/2.0+badgePaddingY,
+	)
+	img.Fill()
+	img.SetHexColor(success)
+	img.DrawRoundedRectangle(
+		panelMargin+panelPadding,
+		panelMargin+panelPadding+badgePaddingY*3+titleLineHeight+badgeMargin,
+		w+badgePaddingX*2,
+		contentLineHeight+badgePaddingY*2,
+		contentLineHeight/2.0+badgePaddingY,
+	)
+	img.Fill()
+	img.SetHexColor("#FFFFFF")
+	img.DrawString(
+		str,
+		panelMargin+panelPadding+badgePaddingX,
+		panelMargin+panelPadding+badgePaddingY*4+badgeMargin+titleLineHeight+contentLineHeight,
+	)
+	lastW := w + badgePaddingX*2 + badgeMargin
+	str = fmt.Sprintf("● Recv: %d", info.ReceivedTotal)
+	w, _ = img.MeasureString(str)
+	img.SetHexColor(shadow)
+	img.DrawRoundedRectangle(
+		panelMargin+panelPadding+lastW+shadowOffsetX,
+		panelMargin+panelPadding+badgePaddingY*3+titleLineHeight+badgeMargin+shadowOffsetY,
+		w+badgePaddingX*2,
+		contentLineHeight+badgePaddingY*2,
+		contentLineHeight/2.0+badgePaddingY,
+	)
+	img.Fill()
+	img.SetHexColor(warning)
+	img.DrawRoundedRectangle(
+		panelMargin+panelPadding+lastW,
+		panelMargin+panelPadding+badgePaddingY*3+titleLineHeight+badgeMargin,
+		w+badgePaddingX*2,
+		contentLineHeight+badgePaddingY*2,
+		contentLineHeight/2.0+badgePaddingY,
+	)
+	img.Fill()
+	img.SetHexColor("#FFFFFF")
+	img.DrawString(
+		str,
+		panelMargin+panelPadding+badgePaddingX+lastW,
+		panelMargin+panelPadding+badgePaddingY*4+badgeMargin+titleLineHeight+contentLineHeight,
+	)
+	lastW += w + badgePaddingX*2 + badgeMargin
+	str = fmt.Sprintf("● Sent: %d", info.SentTotal)
+	w, _ = img.MeasureString(str)
+	img.SetHexColor(shadow)
+	img.DrawRoundedRectangle(
+		panelMargin+panelPadding+lastW+shadowOffsetX,
+		panelMargin+panelPadding+badgePaddingY*3+titleLineHeight+badgeMargin+shadowOffsetY,
+		w+badgePaddingX*2,
+		contentLineHeight+badgePaddingY*2,
+		contentLineHeight/2.0+badgePaddingY,
+	)
+	img.Fill()
+	img.SetHexColor(danger)
+	img.DrawRoundedRectangle(
+		panelMargin+panelPadding+lastW,
+		panelMargin+panelPadding+badgePaddingY*3+titleLineHeight+badgeMargin,
+		w+badgePaddingX*2,
+		contentLineHeight+badgePaddingY*2,
+		contentLineHeight/2.0+badgePaddingY,
+	)
+	img.Fill()
+	img.SetHexColor("#FFFFFF")
+	img.DrawString(
+		str,
+		panelMargin+panelPadding+badgePaddingX+lastW,
+		panelMargin+panelPadding+badgePaddingY*4+badgeMargin+titleLineHeight+contentLineHeight,
+	)
+	//? Bot & System run time
+	dayOrDays := "Day"
+	if info.Days > 1 {
+		dayOrDays = "Days"
+	}
+	str = fmt.Sprintf("Sys: %d %s %02d:%02d:%02d", info.SentTotal, dayOrDays, info.Hours, info.Minutes, info.Seconds)
+	img.SetHexColor(shadow)
+	img.DrawRoundedRectangle(
+		panelMargin+panelPadding+shadowOffsetX,
+		panelMargin+panelPadding+badgePaddingY*5+titleLineHeight+contentLineHeight+badgeMargin*2+shadowOffsetY,
+		(canvasWidth-badgeMargin-(panelPadding+panelMargin)*2)/2.0,
+		contentLineHeight+badgePaddingY*2,
+		contentLineHeight/2.0+badgePaddingY,
+	)
+	img.Fill()
+	img.SetHexColor("#2222229C")
+	img.DrawRoundedRectangle(
+		panelMargin+panelPadding,
+		panelMargin+panelPadding+badgePaddingY*5+titleLineHeight+contentLineHeight+badgeMargin*2,
+		(canvasWidth-badgeMargin-(panelPadding+panelMargin)*2)/2.0,
+		contentLineHeight+badgePaddingY*2,
+		contentLineHeight/2.0+badgePaddingY,
+	)
+	img.Fill()
+	img.SetHexColor("#FFFFFF")
+	img.DrawStringAnchored(
+		str,
+		panelMargin+panelPadding+(canvasWidth-badgeMargin-(panelPadding+panelMargin)*2)/4.0,
+		panelMargin+panelPadding+badgePaddingY*5+titleLineHeight+contentLineHeight*2+badgeMargin*2,
+		0.5, 0.5,
+	)
+	str = fmt.Sprintf("Bot: %d %s %02d:%02d:%02d", info.SentTotal, dayOrDays, info.Hours, info.Minutes, info.Seconds)
+	img.SetHexColor(shadow)
+	img.DrawRoundedRectangle(
+		panelMargin+panelPadding+(canvasWidth-badgeMargin-(panelPadding+panelMargin)*2)/2.0+badgeMargin+shadowOffsetX,
+		panelMargin+panelPadding+badgePaddingY*5+titleLineHeight+contentLineHeight+badgeMargin*2+shadowOffsetY,
+		(canvasWidth-badgeMargin-(panelPadding+panelMargin)*2)/2.0,
+		contentLineHeight+badgePaddingY*2,
+		contentLineHeight/2.0+badgePaddingY,
+	)
+	img.Fill()
+	img.SetHexColor("#2222229C")
+	img.DrawRoundedRectangle(
+		panelMargin+panelPadding+(canvasWidth-badgeMargin-(panelPadding+panelMargin)*2)/2.0+badgeMargin,
+		panelMargin+panelPadding+badgePaddingY*5+titleLineHeight+contentLineHeight+badgeMargin*2,
+		(canvasWidth-badgeMargin-(panelPadding+panelMargin)*2)/2.0,
+		contentLineHeight+badgePaddingY*2,
+		contentLineHeight/2.0+badgePaddingY,
+	)
+	img.Fill()
+	img.SetHexColor("#FFFFFF")
+	img.DrawStringAnchored(
+		str,
+		panelMargin+panelPadding+(canvasWidth-badgeMargin-(panelPadding+panelMargin)*2)*0.75+badgeMargin,
+		panelMargin+panelPadding+badgePaddingY*5+titleLineHeight+contentLineHeight*2+badgeMargin*2,
+		0.5, 0.5,
+	)
 
-	// // Measure badge text width
-	// str := fmt.Sprintf("● Gonebot on %s %s", info.OS, info.Arch)
-	// w, h := img.MeasureString(str)
+	//* Panel for CPU usage
+	//? CPU title badge
+	//? CPU Info badge
+	//? CPU progress bar
+	if info.CpuUsedPercent < 40 {
+		img.SetHexColor(success)
+	} else if info.CpuUsedPercent < 80 {
+		img.SetHexColor(warning)
+	} else {
+		img.SetHexColor(danger)
+	}
 
-	// // Bot badge shadow
-	// img.SetRGBA255(0, 0, 0, 112)
-	// img.DrawRoundedRectangle(110, 110, 116+w, h+64, 50)
-	// img.Fill()
+	//* Panel for memory usage
+	//? Memory title badge
+	//? Memory Info badge
+	//? Memory progress bar
+	if info.CpuUsedPercent < 40 {
+		img.SetHexColor(success)
+	} else if info.CpuUsedPercent < 80 {
+		img.SetHexColor(warning)
+	} else {
+		img.SetHexColor(danger)
+	}
 
-	// // Bot badge
-	// img.SetRGBA255(0, 125, 156, 192)
-	// img.DrawRoundedRectangle(100, 100, 116+w, h+64, 50)
-	// img.Fill()
+	//* Panel for every disk
+	for range info.Disks {
+		//? Disk progress bar
+		canvasHeight += badgePaddingY*2 + contentLineHeight
+	}
 
-	// // Bot badge text
-	// img.SetRGBA(1, 1, 1, 1)
-	// img.DrawStringAnchored(str, 158, 132+h/2, 0, 0.5)
-	// img.Fill()
-
-	// // Measure badge text width
-	// if info.Days > 1 {
-	// 	str = fmt.Sprintf("● Time elapsed since system boot:\n%d Days %02d:%02d:%02d", info.Days, info.Hours, info.Minutes, info.Seconds)
-	// } else {
-	// 	str = fmt.Sprintf("● Time elapsed since system boot:\n%d Day %02d:%02d:%02d", info.Days, info.Hours, info.Minutes, info.Seconds)
-	// }
-	// w, h = img.MeasureMultilineString(str, 2)
-
-	// // Running time shadow
-	// img.SetRGBA255(0, 0, 0, 112)
-	// img.DrawRoundedRectangle(110, 258, 116+w, h+64, 50)
-	// img.Fill()
-
-	// // Running time
-	// img.SetRGBA255(103, 194, 58, 192)
-	// img.DrawRoundedRectangle(100, 248, 116+w, h+64, 50)
-	// img.Fill()
-
-	// // Running time text
-	// img.SetRGBA(0, 0, 0, 1)
-	// img.DrawStringWrapped(str, 158, 280+h/2, 0, 0.5, w, 2, gg.AlignCenter)
-	// img.Fill()
-
-	// // Panel2 shadow
-	// img.SetRGBA255(0, 0, 0, 112)
-	// img.DrawRoundedRectangle(58, 546, 1184, 690, 64)
-	// img.Fill()
-
-	// // Panel2
-	// img.SetRGBA255(255, 255, 255, 156)
-	// img.DrawRoundedRectangle(48, 536, 1184, 690, 64)
-	// img.Fill()
-
-	// // Dashboard witdh
-	// width := 28.0
-
-	// // CPU dashboard
-	// img.SetRGBA(0, 0, 0, 0.3)
-	// for i := 0.0; i < width; i++ {
-	// 	img.DrawCircle(224, 728, 128-i)
-	// 	img.Stroke()
-	// }
-	// if info.CpuUsedPercent < 50 {
-	// 	img.SetRGBA255(103, 194, 58, 192)
-	// } else if info.CpuUsedPercent < 80 {
-	// 	img.SetRGBA255(230, 162, 60, 192)
-	// } else {
-	// 	img.SetRGBA255(245, 108, 108, 192)
-	// }
-	// for i := 0.0; i < width; i++ {
-	// 	img.DrawArc(224, 728, 128-i, gg.Radians(-90.0), gg.Radians(-90.0+3.6*info.CpuUsedPercent))
-	// 	img.Stroke()
-	// }
-
-	// // CPU dashboard text
-	// img.SetRGBA(0, 0, 0, 1)
-	// str = fmt.Sprintf("CPU: %d%%\nCores: %d", int8(math.Round(info.CpuUsedPercent)), info.CpuCores)
-	// w, _ = img.MeasureMultilineString(str, 2)
-	// img.DrawStringWrapped(str, 388, 750, 0, 0.5, w, 2, gg.AlignLeft)
-
-	// // Memory dashboard
-	// img.SetRGBA(0, 0, 0, 0.3)
-	// for i := 0.0; i < width; i++ {
-	// 	img.DrawCircle(224, 1034, 128-i)
-	// 	img.Stroke()
-	// }
-	// if info.MemUsedPercent < 30 {
-	// 	img.SetRGBA255(103, 194, 58, 192)
-	// } else if info.MemUsedPercent < 80 {
-	// 	img.SetRGBA255(230, 162, 60, 192)
-	// } else {
-	// 	img.SetRGBA255(245, 108, 108, 192)
-	// }
-	// for i := 0.0; i < width; i++ {
-	// 	img.DrawArc(224, 1034, 128-i, gg.Radians(-90.0), gg.Radians(-90.0+3.6*info.MemUsedPercent))
-	// 	img.Stroke()
-	// }
-
-	// // Memory dashboard text
-	// img.SetRGBA(0, 0, 0, 1)
-	// str = fmt.Sprintf("Memory: %d%%\n%.1f/%.1f GB", int8(math.Round(info.MemUsedPercent)), float32(info.MemUsed)/1024.0, float32(info.MemAll)/1024.0)
-	// w, _ = img.MeasureMultilineString(str, 2)
-	// img.DrawStringWrapped(str, 388, 1056, 0, 0.5, w, 2, gg.AlignLeft)
-
-	// Calculate result
+	//! Calculate result
 	var result bytes.Buffer
 	writer := io.Writer(&result)
 	img.EncodePNG(writer)

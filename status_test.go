@@ -30,4 +30,5 @@ func TestRenderer(t *testing.T) {
 		t.Fatal(err)
 	}
 	gg.SavePNG("test.png", img)
+	//! Inspect it yourself
 }

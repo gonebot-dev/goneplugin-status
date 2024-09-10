@@ -36,6 +36,8 @@ type sysInfo struct {
 	CpuUsedPercent float64 `json:"cpuUsedPercent"`
 	CpuCores       int     `json:"cpuCores"`
 	CpuInfo        string  `json:"cpuInfo"`
+	CpuMHzTotal    float64 `json:"cpuMHzTotal"`
+	CpuMHzCurrent  float64 `json:"cpuMHzCurrent"`
 	//OS
 	OS   string `json:"os"`
 	Arch string `json:"arch"`
@@ -77,6 +79,10 @@ func GetSysInfo() (info sysInfo) {
 	info.CpuUsedPercent = cc[0]
 	dat, _ := cpu.Info()
 	info.CpuInfo = dat[0].ModelName
+	for i := range dat {
+		info.CpuMHzTotal += dat[i].Mhz
+	}
+	info.CpuMHzCurrent = info.CpuMHzTotal * info.CpuUsedPercent / 100.0
 
 	// OS
 	info.OS = runtime.GOOS
