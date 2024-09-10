@@ -1,9 +1,9 @@
 package status
 
 import (
-	renderer "github.com/Kingcxp/go-sysinfo-renderer"
 	"github.com/gonebot-dev/gonebot/messages"
 	"github.com/gonebot-dev/gonebot/plugins"
+	"github.com/gonebot-dev/goneplugin-status/renderer"
 )
 
 func handler(msg messages.IncomingStruct) (result messages.ResultStruct) {

@@ -1,4 +1,4 @@
-package status
+package sysinfo
 
 import (
 	"runtime"
@@ -6,10 +6,15 @@ import (
 
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/host"
-	"github.com/shirou/gopsutil/v3/mem"
+	"github.com/shirou/gopsutil/v4/mem"
 )
 
 type sysInfo struct {
+	//Disk
+	DiskAll         uint64
+	DiskFree        uint64
+	DiskUsed        uint64
+	DiskUsedPercent float64
 	//Mem
 	MemAll         uint64
 	MemFree        uint64
@@ -27,6 +32,9 @@ type sysInfo struct {
 	//OS
 	OS   string
 	Arch string
+	//Gonebot
+	SentTotal     int64
+	ReceivedTotal int64
 }
 
 func GetSysInfo() (info sysInfo) {
