@@ -1,23 +1,13 @@
 package status
 
 import (
-	"fmt"
-
+	renderer "github.com/Kingcxp/go-sysinfo-renderer"
 	"github.com/gonebot-dev/gonebot/messages"
 	"github.com/gonebot-dev/gonebot/plugins"
 )
 
-const infoString string = `CPU usage: %f
-RAM usage: %f
-OS info: %s`
-
 func handler(msg messages.IncomingStruct) (result messages.ResultStruct) {
-	info := GetSysInfo()
-	result.Text = fmt.Sprintf(
-		infoString,
-		info.CpuUsedPercent,
-		info.MemUsedPercent,
-		info.OS)
+	result.Imgs = append(result.Imgs, renderer.Render())
 	return result
 }
 
