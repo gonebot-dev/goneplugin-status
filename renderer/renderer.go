@@ -258,7 +258,7 @@ func Render() string {
 	if info.Days > 1 {
 		dayOrDays = "Days"
 	}
-	str = fmt.Sprintf("Sys: %d %s %02d:%02d:%02d", info.SentTotal, dayOrDays, info.Hours, info.Minutes, info.Seconds)
+	str = fmt.Sprintf("Sys: %d %s %02d:%02d:%02d", info.Days, dayOrDays, info.Hours, info.Minutes, info.Seconds)
 	img.SetHexColor(shadow)
 	img.DrawRoundedRectangle(
 		panelMargin+panelPadding+shadowOffsetX,
@@ -284,7 +284,10 @@ func Render() string {
 		panelMargin+panelPadding+badgePaddingY*5+titleLineHeight+contentLineHeight*2+badgeMargin*2,
 		0.5, 0.5,
 	)
-	str = fmt.Sprintf("Bot: %d %s %02d:%02d:%02d", info.SentTotal, dayOrDays, info.Hours, info.Minutes, info.Seconds)
+	if info.BotDays > 1 {
+		dayOrDays = "Days"
+	}
+	str = fmt.Sprintf("Bot: %d %s %02d:%02d:%02d", info.BotDays, dayOrDays, info.BotHours, info.BotMinutes, info.BotSeconds)
 	img.SetHexColor(shadow)
 	img.DrawRoundedRectangle(
 		panelMargin+panelPadding+(canvasWidth-badgeMargin-(panelPadding+panelMargin)*2)/2.0+badgeMargin+shadowOffsetX,

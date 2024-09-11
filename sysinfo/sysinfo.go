@@ -15,6 +15,8 @@ import (
 	"github.com/gonebot-dev/gonebot/api"
 )
 
+var start = time.Now().Unix()
+
 type diskInfo struct {
 	Name        string  `json:"name"`
 	Total       uint64  `json:"total"`
@@ -23,31 +25,35 @@ type diskInfo struct {
 }
 
 type sysInfo struct {
-	//Disk
+	// Disk
 	Disks []diskInfo `json:"disks"`
-	//Mem
+	// Mem
 	MemAll         uint64  `json:"memAll"`
 	MemUsed        uint64  `json:"memUsed"`
 	MemUsedPercent float64 `json:"memUsedPercent"`
-	//Boot time
+	// Boot time
 	Days    int64 `json:"days"`
 	Hours   int64 `json:"hours"`
 	Minutes int64 `json:"minutes"`
 	Seconds int64 `json:"seconds"`
-	//CPU
+	// CPU
 	CpuUsedPercent float64 `json:"cpuUsedPercent"`
 	CpuCores       int     `json:"cpuCores"`
 	CpuInfo        string  `json:"cpuInfo"`
 	CpuLoad1       float64 `json:"cpuLoad1"`
 	CpuLoad5       float64 `json:"cpuLoad5"`
 	CpuLoad15      float64 `json:"cpuLoad15"`
-	//OS
+	// OS
 	OS   string `json:"os"`
 	Arch string `json:"arch"`
-	//Gonebot
+	// Gonebot
 	SentTotal     int    `json:"sentTotal"`
 	ReceivedTotal int    `json:"receivedTotal"`
 	Backend       string `json:"backend"`
+	BotDays       int64  `json:"botDays"`
+	BotHours      int64  `json:"botHours"`
+	BotMinutes    int64  `json:"botMinutes"`
+	BotSeconds    int64  `json:"botSeconds"`
 }
 
 func GetSysInfo() (info sysInfo) {
@@ -106,6 +112,18 @@ func GetSysInfo() (info sysInfo) {
 	info.Minutes -= info.Hours * 60
 	info.Days = info.Hours / 24
 	info.Hours -= info.Days * 24
+
+	ntime = time.Now().Unix()
+	btime = start
+	deltatime = ntime - btime
+
+	info.BotSeconds = int64(deltatime)
+	info.BotMinutes = info.BotSeconds / 60
+	info.BotSeconds -= info.BotMinutes * 60
+	info.BotHours = info.BotMinutes / 60
+	info.BotMinutes -= info.BotHours * 60
+	info.BotDays = info.BotHours / 24
+	info.BotHours -= info.BotDays * 24
 
 	info.SentTotal = api.GetResultCount()
 	info.ReceivedTotal = api.GetIncomingCount()
