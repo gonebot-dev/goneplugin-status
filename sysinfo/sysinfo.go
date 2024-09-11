@@ -2,12 +2,14 @@ package sysinfo
 
 import (
 	"fmt"
+	"regexp"
 	"runtime"
 	"time"
 
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/host"
+	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
 
 	"github.com/gonebot-dev/gonebot/api"
@@ -36,8 +38,9 @@ type sysInfo struct {
 	CpuUsedPercent float64 `json:"cpuUsedPercent"`
 	CpuCores       int     `json:"cpuCores"`
 	CpuInfo        string  `json:"cpuInfo"`
-	CpuMHzTotal    float64 `json:"cpuMHzTotal"`
-	CpuMHzCurrent  float64 `json:"cpuMHzCurrent"`
+	CpuLoad1       float64 `json:"cpuLoad1"`
+	CpuLoad5       float64 `json:"cpuLoad5"`
+	CpuLoad15      float64 `json:"cpuLoad15"`
 	//OS
 	OS   string `json:"os"`
 	Arch string `json:"arch"`
@@ -48,6 +51,8 @@ type sysInfo struct {
 }
 
 func GetSysInfo() (info sysInfo) {
+	unit := uint64(1024 * 1024) // MB
+
 	// Disks
 	infos, _ := disk.Partitions(false)
 	for _, inf := range infos {
@@ -58,8 +63,8 @@ func GetSysInfo() (info sysInfo) {
 		}
 		info.Disks = append(info.Disks, diskInfo{
 			Name:        inf.Mountpoint,
-			Total:       diskStat.Total,
-			Used:        diskStat.Used,
+			Total:       diskStat.Total / unit,
+			Used:        diskStat.Used / unit,
 			UsedPercent: diskStat.UsedPercent,
 		})
 	}
@@ -69,7 +74,6 @@ func GetSysInfo() (info sysInfo) {
 	info.MemAll = v.Total
 	info.MemUsed = info.MemAll - v.Free
 	info.MemUsedPercent = float64(info.MemUsed) / float64(info.MemAll) * 100.0
-	unit := uint64(1024 * 1024) // MB
 	info.MemAll /= unit
 	info.MemUsed /= unit
 
@@ -78,11 +82,12 @@ func GetSysInfo() (info sysInfo) {
 	cc, _ := cpu.Percent(time.Millisecond*200, false) //CPU usage in 200ms
 	info.CpuUsedPercent = cc[0]
 	dat, _ := cpu.Info()
-	info.CpuInfo = dat[0].ModelName
-	for i := range dat {
-		info.CpuMHzTotal += dat[i].Mhz
-	}
-	info.CpuMHzCurrent = info.CpuMHzTotal * info.CpuUsedPercent / 100.0
+	reg := regexp.MustCompile(`( @ ).*Hz`)
+	info.CpuInfo = reg.ReplaceAllString(dat[0].ModelName, "")
+	stat, _ := load.Avg()
+	info.CpuLoad1 = stat.Load1
+	info.CpuLoad5 = stat.Load5
+	info.CpuLoad15 = stat.Load15
 
 	// OS
 	info.OS = runtime.GOOS

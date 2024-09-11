@@ -72,7 +72,7 @@ func Render() string {
 	_, titleLineHeight := tmp.MeasureString("T")
 	tmp.SetFontFace(contentFont)
 	_, contentLineHeight := tmp.MeasureString("T")
-	canvasHeight := panelMargin * 2
+	canvasHeight := 0.0
 
 	//! Define panels
 	//* Panel for badges
@@ -87,25 +87,23 @@ func Render() string {
 	//* Panel for CPU usage
 	canvasHeight += (panelPadding)*2 + panelMargin
 	//? CPU title badge
-	canvasHeight += badgePaddingY*3 + titleLineHeight
+	canvasHeight += badgePaddingY*2 + contentLineHeight
 	//? CPU Info badge
 	canvasHeight += badgePaddingY*2 + contentLineHeight + badgeMargin
 	//? CPU progress bar
-	canvasHeight += badgePaddingY*2 + contentLineHeight + badgeMargin
+	canvasHeight += badgePaddingY + contentLineHeight + badgeMargin
 
 	//* Panel for memory usage
 	canvasHeight += (panelPadding)*2 + panelMargin
 	//? Memory title badge
-	canvasHeight += badgePaddingY*3 + titleLineHeight
-	//? Memory Info badge
-	canvasHeight += badgePaddingY*2 + contentLineHeight + badgeMargin
+	canvasHeight += badgePaddingY*2 + contentLineHeight
 	//? Memory progress bar
-	canvasHeight += badgePaddingY*2 + contentLineHeight + badgeMargin
+	canvasHeight += badgePaddingY + contentLineHeight + badgeMargin
 
 	//* Panel for every disk
 	for range info.Disks {
 		//? Disk progress bar
-		canvasHeight += (panelPadding)*2 + panelMargin + badgePaddingY*2 + contentLineHeight
+		canvasHeight += (panelPadding)*2 + panelMargin + badgePaddingY*3 + contentLineHeight*2 + badgeMargin
 	}
 
 	//! Generate image
@@ -314,9 +312,97 @@ func Render() string {
 	)
 
 	//* Panel for CPU usage
+	img.SetHexColor(shadow)
+	img.DrawRoundedRectangle(
+		panelMargin+shadowOffsetX,
+		panelMargin*2+panelPadding*2+badgePaddingY*7+titleLineHeight+contentLineHeight*2+badgeMargin*2+shadowOffsetY,
+		canvasWidth-panelMargin*2,
+		badgePaddingY*5+badgeMargin*2+contentLineHeight*3+panelPadding*2,
+		32,
+	)
+	img.Fill()
+	img.SetHexColor(panel)
+	img.DrawRoundedRectangle(
+		panelMargin,
+		panelMargin*2+panelPadding*2+badgePaddingY*7+titleLineHeight+contentLineHeight*2+badgeMargin*2,
+		canvasWidth-panelMargin*2,
+		badgePaddingY*5+badgeMargin*2+contentLineHeight*3+panelPadding*2,
+		32,
+	)
+	img.Fill()
 	//? CPU title badge
+	str = fmt.Sprintf("● CPU | Cores: %d", info.CpuCores)
+	w, _ = img.MeasureString(str)
+	img.SetHexColor(shadow)
+	img.DrawRoundedRectangle(
+		(canvasWidth-(w+badgePaddingX*2))/2.0+shadowOffsetX,
+		panelMargin*2+panelPadding*3+badgePaddingY*7+titleLineHeight+contentLineHeight*2+badgeMargin*2+shadowOffsetY,
+		w+badgePaddingX*2,
+		badgePaddingY*2+contentLineHeight,
+		badgePaddingY+contentLineHeight/2.0,
+	)
+	img.Fill()
+	img.SetHexColor(danger)
+	img.DrawRoundedRectangle(
+		(canvasWidth-(w+badgePaddingX*2))/2.0,
+		panelMargin*2+panelPadding*3+badgePaddingY*7+titleLineHeight+contentLineHeight*2+badgeMargin*2,
+		w+badgePaddingX*2,
+		badgePaddingY*2+contentLineHeight,
+		badgePaddingY+contentLineHeight/2.0,
+	)
+	img.Fill()
+	img.SetHexColor("#FFFFFF")
+	img.DrawString(
+		str,
+		(canvasWidth-(w+badgePaddingX*2))/2.0+badgePaddingX,
+		panelMargin*2+panelPadding*3+badgePaddingY*8+titleLineHeight+contentLineHeight*3+badgeMargin*2,
+	)
 	//? CPU Info badge
+	str = fmt.Sprint(info.CpuInfo)
+	w, _ = img.MeasureString(str)
+	img.SetHexColor(shadow)
+	img.DrawRoundedRectangle(
+		(canvasWidth-(w+badgePaddingX*2))/2.0+shadowOffsetX,
+		panelMargin*2+panelPadding*3+badgePaddingY*9+titleLineHeight+contentLineHeight*3+badgeMargin*3+shadowOffsetY,
+		w+badgePaddingX*2,
+		badgePaddingY*2+contentLineHeight,
+		badgePaddingY+contentLineHeight/2.0,
+	)
+	img.Fill()
+	img.SetHexColor(golangBlue)
+	img.DrawRoundedRectangle(
+		(canvasWidth-(w+badgePaddingX*2))/2.0,
+		panelMargin*2+panelPadding*3+badgePaddingY*9+titleLineHeight+contentLineHeight*3+badgeMargin*3,
+		w+badgePaddingX*2,
+		badgePaddingY*2+contentLineHeight,
+		badgePaddingY+contentLineHeight/2.0,
+	)
+	img.Fill()
+	img.SetHexColor("#FFFFFF")
+	img.DrawString(
+		str,
+		(canvasWidth-(w+badgePaddingX*2))/2.0+badgePaddingX,
+		panelMargin*2+panelPadding*3+badgePaddingY*10+titleLineHeight+contentLineHeight*4+badgeMargin*3,
+	)
 	//? CPU progress bar
+	img.SetHexColor(shadow)
+	img.DrawRoundedRectangle(
+		panelMargin+panelPadding+contentLineHeight*5+shadowOffsetX,
+		panelMargin*2+panelPadding*3+badgePaddingY*11+titleLineHeight+contentLineHeight*4+badgeMargin*4+shadowOffsetY,
+		canvasWidth-panelMargin*2-panelPadding*2-contentLineHeight*6,
+		badgePaddingY+contentLineHeight,
+		(badgePaddingY+contentLineHeight)/2.0,
+	)
+	img.Fill()
+	img.SetHexColor(panel)
+	img.DrawRoundedRectangle(
+		panelMargin+panelPadding+contentLineHeight*5,
+		panelMargin*2+panelPadding*3+badgePaddingY*11+titleLineHeight+contentLineHeight*4+badgeMargin*4,
+		canvasWidth-panelMargin*2-panelPadding*2-contentLineHeight*6,
+		badgePaddingY+contentLineHeight,
+		(badgePaddingY+contentLineHeight)/2.0,
+	)
+	img.Fill()
 	if info.CpuUsedPercent < 40 {
 		img.SetHexColor(success)
 	} else if info.CpuUsedPercent < 80 {
@@ -324,23 +410,217 @@ func Render() string {
 	} else {
 		img.SetHexColor(danger)
 	}
+	img.DrawRoundedRectangle(
+		panelMargin+panelPadding+contentLineHeight*5,
+		panelMargin*2+panelPadding*3+badgePaddingY*11+titleLineHeight+contentLineHeight*4+badgeMargin*4,
+		(canvasWidth-panelMargin*2-panelPadding*2-contentLineHeight*6)*info.CpuUsedPercent/100.0,
+		badgePaddingY+contentLineHeight,
+		(badgePaddingY+contentLineHeight)/2.0,
+	)
+	img.Fill()
+	img.SetHexColor("#000000")
+	img.DrawString(
+		fmt.Sprintf("%5.2f%%", info.CpuUsedPercent),
+		panelMargin+panelPadding,
+		panelMargin*2+panelPadding*3+badgePaddingY*11.5+titleLineHeight+contentLineHeight*5+badgeMargin*4,
+	)
+	img.SetHexColor("#000000")
+	img.DrawStringAnchored(
+		fmt.Sprintf("Load: %.2f / %.2f / %.2f", info.CpuLoad1, info.CpuLoad5, info.CpuLoad15),
+		(canvasWidth+contentLineHeight*5)/2.0,
+		panelMargin*2+panelPadding*3+badgePaddingY*11.5+titleLineHeight+contentLineHeight*4.5+badgeMargin*4,
+		0.5, 0.5,
+	)
 
 	//* Panel for memory usage
+	img.SetHexColor(shadow)
+	img.DrawRoundedRectangle(
+		panelMargin+shadowOffsetX,
+		panelMargin*3+panelPadding*4+badgePaddingY*12+titleLineHeight+contentLineHeight*5+badgeMargin*4+shadowOffsetY,
+		canvasWidth-panelMargin*2,
+		badgePaddingY*3+badgeMargin*1+contentLineHeight*2+panelPadding*2,
+		32,
+	)
+	img.Fill()
+	img.SetHexColor(panel)
+	img.DrawRoundedRectangle(
+		panelMargin,
+		panelMargin*3+panelPadding*4+badgePaddingY*12+titleLineHeight+contentLineHeight*5+badgeMargin*4,
+		canvasWidth-panelMargin*2,
+		badgePaddingY*3+badgeMargin*1+contentLineHeight*2+panelPadding*2,
+		32,
+	)
+	img.Fill()
 	//? Memory title badge
-	//? Memory Info badge
+	str = fmt.Sprintf("● Memory | Total: %.2f GB", float64(info.MemAll)/1024.0)
+	w, _ = img.MeasureString(str)
+	img.SetHexColor(shadow)
+	img.DrawRoundedRectangle(
+		(canvasWidth-(w+badgePaddingX*2))/2.0+shadowOffsetX,
+		panelMargin*3+panelPadding*5+badgePaddingY*12+titleLineHeight+contentLineHeight*5+badgeMargin*4+shadowOffsetY,
+		w+badgePaddingX*2,
+		badgePaddingY*2+contentLineHeight,
+		badgePaddingY+contentLineHeight/2.0,
+	)
+	img.Fill()
+	img.SetHexColor(warning)
+	img.DrawRoundedRectangle(
+		(canvasWidth-(w+badgePaddingX*2))/2.0,
+		panelMargin*3+panelPadding*5+badgePaddingY*12+titleLineHeight+contentLineHeight*5+badgeMargin*4,
+		w+badgePaddingX*2,
+		badgePaddingY*2+contentLineHeight,
+		badgePaddingY+contentLineHeight/2.0,
+	)
+	img.Fill()
+	img.SetHexColor("#FFFFFF")
+	img.DrawString(
+		str,
+		(canvasWidth-(w+badgePaddingX*2))/2.0+badgePaddingX,
+		panelMargin*3+panelPadding*5+badgePaddingY*13+titleLineHeight+contentLineHeight*6+badgeMargin*4,
+	)
 	//? Memory progress bar
-	if info.CpuUsedPercent < 40 {
+	img.SetHexColor(shadow)
+	img.DrawRoundedRectangle(
+		panelMargin+panelPadding+contentLineHeight*5+shadowOffsetX,
+		panelMargin*3+panelPadding*5+badgePaddingY*14+titleLineHeight+contentLineHeight*6+badgeMargin*5+shadowOffsetY,
+		canvasWidth-panelMargin*2-panelPadding*2-contentLineHeight*6,
+		badgePaddingY+contentLineHeight,
+		(badgePaddingY+contentLineHeight)/2.0,
+	)
+	img.Fill()
+	img.SetHexColor(panel)
+	img.DrawRoundedRectangle(
+		panelMargin+panelPadding+contentLineHeight*5,
+		panelMargin*3+panelPadding*5+badgePaddingY*14+titleLineHeight+contentLineHeight*6+badgeMargin*5,
+		canvasWidth-panelMargin*2-panelPadding*2-contentLineHeight*6,
+		badgePaddingY+contentLineHeight,
+		(badgePaddingY+contentLineHeight)/2.0,
+	)
+	img.Fill()
+	if info.MemUsedPercent < 40 {
 		img.SetHexColor(success)
-	} else if info.CpuUsedPercent < 80 {
+	} else if info.MemUsedPercent < 80 {
 		img.SetHexColor(warning)
 	} else {
 		img.SetHexColor(danger)
 	}
+	img.DrawRoundedRectangle(
+		panelMargin+panelPadding+contentLineHeight*5,
+		panelMargin*3+panelPadding*5+badgePaddingY*14+titleLineHeight+contentLineHeight*6+badgeMargin*5,
+		(canvasWidth-panelMargin*2-panelPadding*2-contentLineHeight*6)*info.MemUsedPercent/100.0,
+		badgePaddingY+contentLineHeight,
+		(badgePaddingY+contentLineHeight)/2.0,
+	)
+	img.Fill()
+	img.SetHexColor("#000000")
+	img.DrawString(
+		fmt.Sprintf("%5.2f%%", info.MemUsedPercent),
+		panelMargin+panelPadding,
+		panelMargin*3+panelPadding*5+badgePaddingY*14.5+titleLineHeight+contentLineHeight*7+badgeMargin*5,
+	)
+	img.SetHexColor("#000000")
+	img.DrawStringAnchored(
+		fmt.Sprintf("%.2f GB / %.2f GB", float64(info.MemUsed)/1024.0, float64(info.MemAll)/1024.0),
+		(canvasWidth+contentLineHeight*5)/2.0,
+		panelMargin*3+panelPadding*5+badgePaddingY*14.5+titleLineHeight+contentLineHeight*6.5+badgeMargin*5,
+		0.5, 0.5,
+	)
 
 	//* Panel for every disk
-	for range info.Disks {
+	for i := range info.Disks {
+		index := float64(i)
+		img.SetHexColor(shadow)
+		img.DrawRoundedRectangle(
+			panelMargin+shadowOffsetX,
+			panelMargin*(4+index)+panelPadding*(6+2*index)+badgePaddingY*(15+3*index)+titleLineHeight+contentLineHeight*(7+2*index)+badgeMargin*(5+index)+shadowOffsetY,
+			canvasWidth-panelMargin*2,
+			badgePaddingY*3+badgeMargin*1+contentLineHeight*2+panelPadding*2,
+			32,
+		)
+		img.Fill()
+		img.SetHexColor(panel)
+		img.DrawRoundedRectangle(
+			panelMargin,
+			panelMargin*(4+index)+panelPadding*(6+2*index)+badgePaddingY*(15+3*index)+titleLineHeight+contentLineHeight*(7+2*index)+badgeMargin*(5+index),
+			canvasWidth-panelMargin*2,
+			badgePaddingY*3+badgeMargin*1+contentLineHeight*2+panelPadding*2,
+			32,
+		)
+		img.Fill()
+		//? Disk badge
+		str = fmt.Sprintf("● Disk: \"%s\" | Total: %.2f GB", info.Disks[i].Name, float64(info.Disks[i].Total)/1024.0)
+		w, _ = img.MeasureString(str)
+		img.SetHexColor(shadow)
+		img.DrawRoundedRectangle(
+			(canvasWidth-(w+badgePaddingX*2))/2.0+shadowOffsetX,
+			panelMargin*(4+index)+panelPadding*(7+2*index)+badgePaddingY*(15+3*index)+titleLineHeight+contentLineHeight*(7+2*index)+badgeMargin*(5+index)+shadowOffsetY,
+			w+badgePaddingX*2,
+			badgePaddingY*2+contentLineHeight,
+			badgePaddingY+contentLineHeight/2.0,
+		)
+		img.Fill()
+		img.SetHexColor(success)
+		img.DrawRoundedRectangle(
+			(canvasWidth-(w+badgePaddingX*2))/2.0,
+			panelMargin*(4+index)+panelPadding*(7+2*index)+badgePaddingY*(15+3*index)+titleLineHeight+contentLineHeight*(7+2*index)+badgeMargin*(5+index),
+			w+badgePaddingX*2,
+			badgePaddingY*2+contentLineHeight,
+			badgePaddingY+contentLineHeight/2.0,
+		)
+		img.Fill()
+		img.SetHexColor("#FFFFFF")
+		img.DrawString(
+			str,
+			(canvasWidth-(w+badgePaddingX*2))/2.0+badgePaddingX,
+			panelMargin*(4+index)+panelPadding*(7+2*index)+badgePaddingY*(16+3*index)+titleLineHeight+contentLineHeight*(8+2*index)+badgeMargin*(5+index),
+		)
 		//? Disk progress bar
-		canvasHeight += badgePaddingY*2 + contentLineHeight
+		img.SetHexColor(shadow)
+		img.DrawRoundedRectangle(
+			panelMargin+panelPadding+contentLineHeight*5+shadowOffsetX,
+			panelMargin*(4+index)+panelPadding*(7+2*index)+badgePaddingY*(17+3*index)+titleLineHeight+contentLineHeight*(8+2*index)+badgeMargin*(6+index)+shadowOffsetY,
+			canvasWidth-panelMargin*2-panelPadding*2-contentLineHeight*6,
+			badgePaddingY+contentLineHeight,
+			(badgePaddingY+contentLineHeight)/2.0,
+		)
+		img.Fill()
+		img.SetHexColor(panel)
+		img.DrawRoundedRectangle(
+			panelMargin+panelPadding+contentLineHeight*5,
+			panelMargin*(4+index)+panelPadding*(7+2*index)+badgePaddingY*(17+3*index)+titleLineHeight+contentLineHeight*(8+2*index)+badgeMargin*(6+index),
+			canvasWidth-panelMargin*2-panelPadding*2-contentLineHeight*6,
+			badgePaddingY+contentLineHeight,
+			(badgePaddingY+contentLineHeight)/2.0,
+		)
+		img.Fill()
+		if info.Disks[i].UsedPercent < 40 {
+			img.SetHexColor(success)
+		} else if info.Disks[i].UsedPercent < 80 {
+			img.SetHexColor(warning)
+		} else {
+			img.SetHexColor(danger)
+		}
+		img.DrawRoundedRectangle(
+			panelMargin+panelPadding+contentLineHeight*5,
+			panelMargin*(4+index)+panelPadding*(7+2*index)+badgePaddingY*(17+3*index)+titleLineHeight+contentLineHeight*(8+2*index)+badgeMargin*(6+index),
+			(canvasWidth-panelMargin*2-panelPadding*2-contentLineHeight*6)*info.Disks[i].UsedPercent/100.0,
+			badgePaddingY+contentLineHeight,
+			(badgePaddingY+contentLineHeight)/2.0,
+		)
+		img.Fill()
+		img.SetHexColor("#000000")
+		img.DrawString(
+			fmt.Sprintf("%5.2f%%", info.Disks[i].UsedPercent),
+			panelMargin+panelPadding,
+			panelMargin*(4+index)+panelPadding*(7+2*index)+badgePaddingY*(17.5+3*index)+titleLineHeight+contentLineHeight*(9+2*index)+badgeMargin*(6+index),
+		)
+		img.SetHexColor("#000000")
+		img.DrawStringAnchored(
+			fmt.Sprintf("%.2f GB / %.2f GB", float64(info.Disks[i].Used)/1024.0, float64(info.Disks[i].Total)/1024.0),
+			(canvasWidth+contentLineHeight*5)/2.0,
+			panelMargin*(4+index)+panelPadding*(7+2*index)+badgePaddingY*(17.5+3*index)+titleLineHeight+contentLineHeight*(8.5+2*index)+badgeMargin*(6+index),
+			0.5, 0.5,
+		)
 	}
 
 	//! Calculate result
