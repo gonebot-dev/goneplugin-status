@@ -6,13 +6,13 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/gonebot-dev/gonebot/adapter"
+	"github.com/gonebot-dev/gonebot/message"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
-
-	"github.com/gonebot-dev/gonebot/api"
 )
 
 var start = time.Now().Unix()
@@ -56,7 +56,7 @@ type sysInfo struct {
 	BotSeconds    int64  `json:"botSeconds"`
 }
 
-func GetSysInfo() (info sysInfo) {
+func GetSysInfo(a *adapter.Adapter) (info sysInfo) {
 	unit := uint64(1024 * 1024) // MB
 
 	// Disks
@@ -125,9 +125,9 @@ func GetSysInfo() (info sysInfo) {
 	info.BotDays = info.BotHours / 24
 	info.BotHours -= info.BotDays * 24
 
-	info.SentTotal = api.GetResultCount()
-	info.ReceivedTotal = api.GetIncomingCount()
-	info.Backend = api.GetBackend()
+	info.SentTotal = message.GetSentCount()
+	info.ReceivedTotal = message.GetReceivedCount()
+	info.Backend = a.Name
 
 	return
 }

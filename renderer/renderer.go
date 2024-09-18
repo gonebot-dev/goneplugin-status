@@ -13,6 +13,7 @@ import (
 	"github.com/fogleman/gg"
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
+	"github.com/gonebot-dev/gonebot/adapter"
 	"github.com/gonebot-dev/goneplugin-status/sysinfo"
 	"github.com/nfnt/resize"
 	"golang.org/x/image/font"
@@ -64,9 +65,9 @@ func init() {
 }
 
 // Render renders the system info to an image and returns it as a base64 string
-func Render() string {
+func Render(a *adapter.Adapter) string {
 	// Render process
-	info := sysinfo.GetSysInfo()
+	info := sysinfo.GetSysInfo(a)
 	tmp := gg.NewContext(0, 0)
 	tmp.SetFontFace(titleFont)
 	_, titleLineHeight := tmp.MeasureString("T")
