@@ -22,7 +22,8 @@ func init() {
 	Status.Description = "Show bot status"
 
 	Status.Handlers = append(Status.Handlers, plugin.GoneHandler{
-		Rules:   rule.NewRules(rule.ToMe()).And(rule.Command("status")),
+		Rules: rule.NewRules(rule.ToMe()).And(rule.Command("status")).
+			OrRules(rule.NewRules(rule.ToMe()).And(rule.Notice("group_poke", "friend_poke"))),
 		Handler: handler,
 	})
 }
