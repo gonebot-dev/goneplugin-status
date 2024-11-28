@@ -5,7 +5,7 @@ go 1.22.7
 require (
 	github.com/fogleman/gg v1.3.0
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
-	github.com/gonebot-dev/gonebot v1.0.1
+	github.com/gonebot-dev/gonebot v1.0.2
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	golang.org/x/image v0.20.0

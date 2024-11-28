@@ -18,7 +18,7 @@ var Status plugin.GonePlugin
 
 func init() {
 	Status.Name = "Status"
-	Status.Version = "v0.1.0"
+	Status.Version = "v0.1.1"
 	Status.Description = "Show bot status"
 
 	Status.Handlers = append(Status.Handlers, plugin.GoneHandler{
