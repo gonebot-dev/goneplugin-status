@@ -1,6 +1,7 @@
 package status
 
 import (
+	"github.com/gonebot-dev/gonebot"
 	"github.com/gonebot-dev/gonebot/message"
 	"github.com/gonebot-dev/gonebot/plugin"
 	"github.com/gonebot-dev/gonebot/plugin/handler"
@@ -29,4 +30,8 @@ func init() {
 		Matcher: statusMatcher,
 		Handler: statusHandler,
 	})
+}
+
+func Load() {
+	gonebot.LoadPlugin(Status)
 }
