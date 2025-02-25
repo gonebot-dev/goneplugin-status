@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gonebot-dev/gonebot/adapter"
-	"github.com/gonebot-dev/gonebot/message"
+	"github.com/gonebot-dev/gonebot/utils"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/host"
@@ -56,7 +56,7 @@ type sysInfo struct {
 	BotSeconds    int64  `json:"botSeconds"`
 }
 
-func GetSysInfo(a *adapter.Adapter) (info sysInfo) {
+func GetSysInfo() (info sysInfo) {
 	unit := uint64(1024 * 1024) // MB
 
 	// Disks
@@ -125,9 +125,9 @@ func GetSysInfo(a *adapter.Adapter) (info sysInfo) {
 	info.BotDays = info.BotHours / 24
 	info.BotHours -= info.BotDays * 24
 
-	info.SentTotal = message.GetSentCount()
-	info.ReceivedTotal = message.GetReceivedCount()
-	info.Backend = a.Name
+	info.SentTotal = utils.GetResultCount()
+	info.ReceivedTotal = utils.GetIncomingCount()
+	info.Backend = adapter.GetCurrentAdatper().Name
 
 	return
 }
